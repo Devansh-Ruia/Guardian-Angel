@@ -1,1 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guardian Angel - AI Safety Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .logo-subtitle {
+            color: #718096;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        h1 {
+            font-size: 32px;
+            color: #1a202c;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .status-item {
+            flex: 1;
+            min-width: 200px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .status-label {
+            font-size: 12px;
+            color: #4a5568;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .status-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1a202c;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-left: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-good { background: #48bb78; }
+        .status-warning { background: #ed8936; }
+        .status-critical { background: #f56565; }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 968px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .alert-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .alert-item {
+            background: #fff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            transition: transform 0.2s;
+        }
+
+        .alert-item:hover {
+            transform: translateX(5px);
+        }
+
+        .alert-critical {
+            border-left-color: #f56565;
+            background: rgba(245, 101, 101, 0.05);
+        }
+
+        .alert-warning {
+            border-left-color: #ed8936;
+            background: rgba(237, 137, 54, 0.05);
+        }
+
+        .alert-info {
+            border-left-color: #4299e1;
+            background: rgba(66, 153, 225, 0.05);
+        }
+
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .alert-type {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            border-radius: 4px;
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+        }
+
+        .alert-time {
+            font-size: 11px;
+            color: #a0aec0;
+        }
+
+        .alert-message {
+            color: #2d3748;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .alert-action {
+            font-size: 12px;
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: #4a5568;
+            margin-top: 5px;
+        }
+
+        .chart-container {
+            height: 200px;
+            position: relative;
+            margin-top: 20px;
+        }
+
+        .chart {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to top, rgba(102, 126, 234, 0.1), transparent);
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-line {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 60%;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            clip-path: polygon(
+                0% 80%,
+                10% 70%,
+                20% 75%,
+                30% 60%,
+                40% 65%,
+                50% 50%,
+                60% 40%,
+                70% 45%,
+                80% 30%,
+                90% 35%,
+                100% 25%,
+                100% 100%,
+                0% 100%
+            );
+            animation: slide 10s linear infinite;
+        }
+
+        @keyframes slide {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(0); }
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.9);
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .systems-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .system-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s;
+        }
+
+        .system-card:hover {
+            border-color: #667eea;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.2);
+        }
+
+        .system-name {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .system-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #718096;
+        }
+
+        .status-healthy {
+            background: #48bb78;
+        }
+        
+        .status-monitoring {
+            background: #4299e1;
+        }
+        
+        .status-warning-indicator {
+            background: #ed8936;
+        }
+
+        .status-static {
+            position: static;
+        }
+
+        .loading-animation {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(102, 126, 234, 0.3);
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon">🛡️</div>
+                <div>
+                    <h1>Guardian Angel</h1>
+                    <p class="logo-subtitle">AI Safety Monitoring System</p>
+                </div>
+            </div>
+            <div class="status-bar">
+                <div class="status-item">
+                    <div class="status-label">System Status</div>
+                    <div class="status-value">
+                        Operational
+                        <span class="status-indicator status-good"></span>
+                    </div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Active Monitors</div>
+                    <div class="status-value" id="activeMonitors">12</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Threats Blocked</div>
+                    <div class="status-value" id="threatsBlocked">247</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Uptime</div>
+                    <div class="status-value">99.98%</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard">
+            <div class="panel">
+                <div class="panel-title">
+                    Real-Time Alerts
+                    <span class="loading-animation"></span>
+                </div>
+                <div class="alert-list" id="alertsList">
+                    <!-- Alerts will be dynamically added here -->
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">Performance Metrics</div>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value" id="avgResponseTime">23ms</div>
+                        <div class="metric-label">Avg Response Time</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="falsePositiveRate">0.3%</div>
+                        <div class="metric-label">False Positive Rate</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="accuracyRate">99.7%</div>
+                        <div class="metric-label">Detection Accuracy</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="throughput">10K/s</div>
+                        <div class="metric-label">Throughput</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart">
+                        <div class="chart-line"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">Monitored Systems</div>
+                <div class="systems-grid" id="systemsGrid">
+                    <!-- Systems will be dynamically added here -->
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">Quick Actions</div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="runDiagnostics()">Run Diagnostics</button>
+                    <button class="btn btn-secondary" onclick="exportReport()">Export Report</button>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="configureAlerts()">Configure Alerts</button>
+                    <button class="btn btn-secondary" onclick="viewLogs()">View Logs</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample alert data
+        const alertTypes = [
+            { type: 'BIAS DETECTION', severity: 'warning', message: 'Recommendation system showing 15% bias towards demographic group A', action: 'Applying fairness constraints...' },
+            { type: 'SECURITY', severity: 'critical', message: 'Potential prompt injection detected in customer service bot', action: 'Request blocked and logged' },
+            { type: 'PERFORMANCE', severity: 'info', message: 'Response latency increased by 20% in translation model', action: 'Scaling resources...' },
+            { type: 'DATA LEAK', severity: 'critical', message: 'PII pattern detected in model output', action: 'Output sanitized, incident reported' },
+            { type: 'DRIFT', severity: 'warning', message: 'Model accuracy degraded by 5% over past hour', action: 'Triggering retraining pipeline...' }
+        ];
+
+        const systems = [
+            { name: 'Customer Service Bot', status: 'healthy', uptime: '99.9%' },
+            { name: 'Recommendation Engine', status: 'monitoring', uptime: '99.7%' },
+            { name: 'Code Assistant', status: 'healthy', uptime: '100%' },
+            { name: 'Translation API', status: 'warning', uptime: '98.5%' },
+            { name: 'Content Moderator', status: 'healthy', uptime: '99.8%' },
+            { name: 'Search Ranking', status: 'healthy', uptime: '99.95%' }
+        ];
+
+        function generateAlert() {
+            const alert = alertTypes[Math.floor(Math.random() * alertTypes.length)];
+            const time = new Date().toLocaleTimeString();
+            
+            const alertHtml = `
+                <div class="alert-item alert-${alert.severity}">
+                    <div class="alert-header">
+                        <span class="alert-type">${alert.type}</span>
+                        <span class="alert-time">${time}</span>
+                    </div>
+                    <div class="alert-message">${alert.message}</div>
+                    <div class="alert-action">Action: ${alert.action}</div>
+                </div>
+            `;
+            
+            const alertsList = document.getElementById('alertsList');
+            alertsList.insertAdjacentHTML('afterbegin', alertHtml);
+            
+            // Keep only last 10 alerts
+            while (alertsList.children.length > 10) {
+                alertsList.removeChild(alertsList.lastChild);
+            }
+        }
+
+        function updateMetrics() {
+            // Simulate metric updates
+            document.getElementById('avgResponseTime').textContent = 
+                Math.floor(Math.random() * 10 + 20) + 'ms';
+            
+            document.getElementById('threatsBlocked').textContent = 
+                parseInt(document.getElementById('threatsBlocked').textContent) + Math.floor(Math.random() * 3);
+        }
+
+        function populateSystems() {
+            const grid = document.getElementById('systemsGrid');
+            systems.forEach(system => {
+                const statusClass = system.status === 'healthy' ? 'status-healthy' : 
+                                   system.status === 'warning' ? 'status-warning-indicator' : 'status-monitoring';
+                
+                const systemHtml = `
+                    <div class="system-card">
+                        <div class="system-name">${system.name}</div>
+                        <div class="system-status">
+                            <span class="status-indicator ${statusClass} status-static"></span>
+                            <span>Uptime: ${system.uptime}</span>
+                        </div>
+                    </div>
+                `;
+                grid.insertAdjacentHTML('beforeend', systemHtml);
+            });
+        }
+
+        function runDiagnostics() {
+            alert('Running comprehensive system diagnostics...\n\n✓ Security audit initiated\n✓ Performance baseline check\n✓ Bias detection scan\n✓ Integration health check');
+        }
+
+        function exportReport() {
+            alert('Generating safety audit report...\n\nReport will include:\n• Alert history\n• Performance metrics\n• Threat analysis\n• Compliance status');
+        }
+
+        function configureAlerts() {
+            alert('Alert Configuration Panel\n\nConfigure thresholds for:\n• Bias detection sensitivity\n• Security threat levels\n• Performance degradation\n• Data leak patterns');
+        }
+
+        function viewLogs() {
+            alert('Opening detailed audit logs...\n\nAvailable log categories:\n• System decisions\n• Interventions\n• False positives\n• Learning updates');
+        }
+
+        // Initialize dashboard
+        populateSystems();
+        
+        // Generate initial alerts
+        for (let i = 0; i < 3; i++) {
+            generateAlert();
+        }
+        
+        // Simulate real-time updates
+        setInterval(generateAlert, 8000);
+        setInterval(updateMetrics, 3000);
+    </script>
+</body>
+</html>
